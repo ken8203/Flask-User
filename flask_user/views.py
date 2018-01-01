@@ -4,8 +4,11 @@
     :author: Ling Thio (ling.thio@gmail.com)
     :license: Simplified BSD License, see LICENSE.txt for more details."""
 
+import time
+import random
+import string
 from datetime import datetime
-from flask import current_app, flash, redirect, request, url_for
+from flask import current_app, flash, redirect, request, url_for, session
 from flask_login import current_user, login_user, logout_user
 from .decorators import confirm_email_required, login_required
 from . import emails
@@ -320,6 +323,12 @@ def manage_emails():
             form=form,
             )
 
+
+def generate_referral_token(value, length = 5, chars = string.ascii_letters + string.digits):
+    random.seed(value)
+    return ''.join(random.choice(chars) for _ in range(length))
+
+
 def register():
     """ Display registration form and create new User."""
 
@@ -332,7 +341,7 @@ def register():
     # Initialize form
     login_form = user_manager.login_form()                      # for login_or_register.html
     register_form = user_manager.register_form(request.form)    # for register.html
-
+    
     # invite token used to determine validity of registeree
     invite_token = request.values.get("token")
 
@@ -362,7 +371,6 @@ def register():
         User = db_adapter.UserClass
         user_class_fields = User.__dict__
         user_fields = {}
-
         # Create a UserEmail object using Form fields that have a corresponding UserEmail field
         if db_adapter.UserEmailClass:
             UserEmail = db_adapter.UserEmailClass
@@ -374,6 +382,12 @@ def register():
             UserAuth = db_adapter.UserAuthClass
             user_auth_class_fields = UserAuth.__dict__
             user_auth_fields = {}
+
+        # Create a UserAuth object using Form fields that have a corresponding UserAuth field
+        if db_adapter.ReferralClass:
+            Referral = db_adapter.ReferralClass
+            referral_class_fields = Referral.__dict__
+            referral_fields = {}
 
         # Enable user account
         if db_adapter.UserProfileClass:
@@ -410,11 +424,24 @@ def register():
                 if db_adapter.UserAuthClass:
                     if field_name in user_auth_class_fields:
                         user_auth_fields[field_name] = field_value
+        user_fields['referral_token'] = generate_referral_token(user_fields['username'])
+        user_fields['created_at'] = int(time.time())
+        user_fields['updated_at'] = int(time.time())
 
         # Add User record using named arguments 'user_fields'
         user = db_adapter.add_object(User, **user_fields)
         if db_adapter.UserProfileClass:
             user_profile = user
+
+        # Add Referral record
+        ref = session.get('ref')
+        if ref is not None:
+            upline = User.query.filter_by(referral_token=ref).first()
+            parent = Referral.query.filter_by(username=upline.username).first()
+            referral_data = {'username': user_fields['username'], 'parent_id': parent.id}
+        else:
+            referral_data = {'username': user_fields['username'], 'parent_id': None}
+        referral = db_adapter.add_object(Referral, **referral_data)
 
         # Add UserEmail record using named arguments 'user_email_fields'
         if db_adapter.UserEmailClass:

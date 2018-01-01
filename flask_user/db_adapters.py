@@ -11,13 +11,14 @@ from flask_login import current_user
 class DBAdapter(object):
     """ This object is used to shield Flask-User from ORM specific functions.
         It's used as the base class for ORM specific adapters like SQLAlchemyAdapter."""
-    def __init__(self, db, UserClass, UserAuthClass=None, UserEmailClass=None, UserProfileClass=None, UserInvitationClass=None):
+    def __init__(self, db, UserClass, UserAuthClass=None, UserEmailClass=None, UserProfileClass=None, UserInvitationClass=None, ReferralClass=None):
         self.db = db
         self.UserClass = UserClass                  # first_name, last_name, etc.
         self.UserAuthClass = UserAuthClass          # username, password, etc.
         self.UserEmailClass = UserEmailClass        # For multiple emails per user
         self.UserProfileClass = UserProfileClass    # Distinguish between v0.5 or v0.6 call
         self.UserInvitationClass = UserInvitationClass
+        self.ReferralClass = ReferralClass
 
         if UserProfileClass:    # pragma: no cover
             # Print deprecation warning
@@ -32,8 +33,8 @@ class DBAdapter(object):
 
 class SQLAlchemyAdapter(DBAdapter):
     """ This object is used to shield Flask-User from SQLAlchemy specific functions."""
-    def __init__(self, db, UserClass, UserProfileClass=None, UserAuthClass=None, UserEmailClass=None, UserInvitationClass=None):
-        super(SQLAlchemyAdapter, self).__init__(db, UserClass, UserAuthClass, UserEmailClass, UserProfileClass, UserInvitationClass)
+    def __init__(self, db, UserClass, ReferralClass, UserProfileClass=None, UserAuthClass=None, UserEmailClass=None, UserInvitationClass=None):
+        super(SQLAlchemyAdapter, self).__init__(db, UserClass, UserAuthClass, UserEmailClass, UserProfileClass, UserInvitationClass, ReferralClass)
 
     def get_object(self, ObjectClass, id):
         """ Retrieve one object specified by the primary key 'pk' """
@@ -64,7 +65,7 @@ class SQLAlchemyAdapter(DBAdapter):
         # Convert each name/value pair in 'kwargs' into a filter
         query = ObjectClass.query
         for field_name, field_value in kwargs.items():
-
+            print(field_name, field_value)
             # Make sure that ObjectClass has a 'field_name' property
             field = getattr(ObjectClass, field_name, None)
             if field is None:
