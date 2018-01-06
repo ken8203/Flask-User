@@ -273,7 +273,7 @@ def login():
 
         if user:
             # Log user in
-            safe_next = user_manager.make_safe_url_function(login_form.next.data)
+            safe_next = '/dashboard'#user_manager.make_safe_url_function(login_form.next.data)
             return _do_login_user(user, safe_next, login_form.remember_me.data)
 
     # Process GET or invalid POST
@@ -335,8 +335,8 @@ def register():
     user_manager =  current_app.user_manager
     db_adapter = user_manager.db_adapter
 
-    safe_next = _get_safe_next_param('next', user_manager.after_login_endpoint)
-    safe_reg_next = _get_safe_next_param('reg_next', user_manager.after_register_endpoint)
+    safe_next = '/dashboard'#_get_safe_next_param('next', user_manager.after_login_endpoint)
+    safe_reg_next = '/dashboard'#_get_safe_next_param('reg_next', user_manager.after_register_endpoint)
 
     # Initialize form
     login_form = user_manager.login_form()                      # for login_or_register.html
