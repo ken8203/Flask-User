@@ -438,9 +438,9 @@ def register():
         if ref is not None:
             upline = User.query.filter_by(referral_token=ref).first()
             parent = Referral.query.filter_by(username=upline.username).first()
-            referral_data = {'username': user_fields['username'], 'parent_id': parent.id}
+            referral_data = {'user_id': user.id, 'username': user_fields['username'], 'parent_id': parent.id}
         else:
-            referral_data = {'username': user_fields['username'], 'parent_id': None}
+            referral_data = {'user_id': user.id, 'username': user_fields['username'], 'parent_id': None}
         referral = db_adapter.add_object(Referral, **referral_data)
 
         # Add UserEmail record using named arguments 'user_email_fields'
